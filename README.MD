@@ -1,4 +1,4 @@
-<h1 align="center">A Full-Stack Chat App using WebSockets with Auth✨</h1>
+<h1 align="center">A Full-Stack Chat App using WebSockets with Auth</h1>
 
 ## 🧪 .env Setup
 
