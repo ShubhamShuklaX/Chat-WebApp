@@ -1,8 +1,8 @@
-<h1 align="center">A Full-Stack Chat App using WebSockets with Auth</h1>
+<h1 align="center">A Full-Stack Chat App using WebSockets with Auth✨</h1>
 
 ## 🧪 .env Setup
 
-### Backend (`/backend`)
+### Change .env.example to .env
 
 ```bash
 PORT=3000
