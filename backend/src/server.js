@@ -10,35 +10,53 @@ import { ENV } from "./lib/env.js";
 import { app, server } from "./lib/socket.js";
 
 const __dirname = path.resolve();
-
 const PORT = ENV.PORT || 3000;
 
-app.use(express.json({ limit: "5mb" })); // req.body
+// -----------------------------------------------------------------------------
+// MIDDLEWARE
+// -----------------------------------------------------------------------------
+app.use(express.json({ limit: "5mb" }));
+
+// CORS for API + Socket.io
 app.use(
   cors({
     origin: [
-      "http://localhost:5173", // local dev
-      "https://chat-web-app-seven-hazel.vercel.app", // your Vercel frontend URL
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "https://chat-web-app-seven-hazel.vercel.app",
+      "https://chat-webapp-j6hm.onrender.com",
     ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
 
+// still ok to keep but not used for jwt auth anymore
 app.use(cookieParser());
 
+// -----------------------------------------------------------------------------
+// ROUTES
+// -----------------------------------------------------------------------------
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
-// make ready for deployment
+// -----------------------------------------------------------------------------
+// PRODUCTION FRONTEND (Vercel / Render deployment)
+// -----------------------------------------------------------------------------
 if (ENV.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+  const frontendPath = path.join(__dirname, "../frontend/dist");
+  app.use(express.static(frontendPath));
 
   app.get("*", (_, res) => {
-    res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
+    res.sendFile(path.join(frontendPath, "index.html"));
   });
 }
 
+// -----------------------------------------------------------------------------
+// START SERVER
+// -----------------------------------------------------------------------------
 server.listen(PORT, () => {
-  console.log("Server running on port: " + PORT);
+  console.log("Server running on port:", PORT);
   connectDB();
 });

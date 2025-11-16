@@ -23,8 +23,9 @@ export const useAuthStore = create((set, get) => ({
   checkAuth: async () => {
     try {
       const res = await axiosInstance.get("/auth/check");
-      set({ authUser: res.data });
+      set({ authUser: res.data.user });
 
+      // reconnect socket after refresh
       get().connectSocket();
     } catch (error) {
       console.log("Error in authCheck:", error);
@@ -41,7 +42,9 @@ export const useAuthStore = create((set, get) => ({
     set({ isSigningUp: true });
     try {
       const res = await axiosInstance.post("/auth/signup", data);
-      set({ authUser: res.data });
+
+      localStorage.setItem("token", res.data.token);
+      set({ authUser: res.data.user });
 
       toast.success("Account created successfully!");
       get().connectSocket();
@@ -59,7 +62,9 @@ export const useAuthStore = create((set, get) => ({
     set({ isLoggingIn: true });
     try {
       const res = await axiosInstance.post("/auth/login", data);
-      set({ authUser: res.data });
+
+      localStorage.setItem("token", res.data.token);
+      set({ authUser: res.data.user });
 
       toast.success("Logged in successfully");
       get().connectSocket();
@@ -76,6 +81,8 @@ export const useAuthStore = create((set, get) => ({
   logout: async () => {
     try {
       await axiosInstance.post("/auth/logout");
+
+      localStorage.removeItem("token");
       set({ authUser: null });
 
       toast.success("Logged out successfully");
@@ -92,6 +99,8 @@ export const useAuthStore = create((set, get) => ({
   updateProfile: async (data) => {
     try {
       const res = await axiosInstance.put("/auth/update-profile", data);
+
+      // Backend returns the updated user DIRECTLY, not {user: updatedUser}
       set({ authUser: res.data });
 
       toast.success("Profile updated successfully");
@@ -110,15 +119,17 @@ export const useAuthStore = create((set, get) => ({
     if (!authUser) return;
     if (socket?.connected) return;
 
+    const token = localStorage.getItem("token");
+
     const newSocket = io(BASE_URL, {
-      transports: ["websocket"], // force proper connection
+      transports: ["websocket"],
+      auth: { token },
     });
 
     newSocket.on("connect", () => {
       console.log("Socket connected:", newSocket.id);
     });
 
-    // Receive online users
     newSocket.on("getOnlineUsers", (userIds) => {
       set({ onlineUsers: userIds });
     });
